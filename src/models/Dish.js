@@ -12,6 +12,7 @@ const DishSchema = new mongoose.Schema({
   ingredients: [String],
   allergens: [String],
   prepTime: Number,
+  stock: { type: Number, default: 0 },
   isAvailable: { type: Boolean, default: true },
   isVegetarian: Boolean,
   calories: Number,

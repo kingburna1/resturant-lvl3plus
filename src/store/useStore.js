@@ -42,6 +42,13 @@ const useStore = create(
         }
       }),
 
+      // Clear the entire cart (used after placing an order)
+      clearCart: () => set(() => ({ cart: [] })),
+
+      // --- Orders ---
+      orders: [],
+      addOrder: (order) => set((state) => ({ orders: [...state.orders, order] })),
+
       // Helper to get total count for the UI badge
       getCartCount: () => {
          // This logic is usually done inside components using selectors, 

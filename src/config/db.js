@@ -8,20 +8,35 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-const connectDB = async () => {
-  try {
-    // Check for the correct variable name
-    if (!process.env.MONGO_URL) {
-      throw new Error("MONGO_URL is missing in .env file");
-    }
+let cached = global._mongoClientPromise;
 
-    // Use the correct variable name here too
-    await mongoose.connect(process.env.MONGO_URL);
-    
-    console.log("✅ MongoDB connected with Mongoose");
+const connectDB = async () => {
+  const MONGO_URL = process.env.MONGO_URL;
+  if (!MONGO_URL) {
+    throw new Error('MONGO_URL is missing in environment');
+  }
+
+  if (!cached) {
+    cached = { conn: null, promise: null };
+    global._mongoClientPromise = cached;
+  }
+
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGO_URL, { bufferCommands: false }).then((mongooseInstance) => {
+      return mongooseInstance;
+    });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+    console.log('✅ MongoDB connected with Mongoose');
+    return cached.conn;
   } catch (err) {
-    console.error("❌ MongoDB connection failed:", err.message);
-    process.exit(1);
+    console.error('❌ MongoDB connection failed:', err.message || err);
+    // Do not exit the process; throw so callers can handle and return proper HTTP errors
+    throw err;
   }
 };
 

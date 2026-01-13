@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ShoppingCart, Heart, Star, Clock, Flame, ChefHat, Info, ArrowLeft, CreditCard } from 'lucide-react';
+import useStore from '../../../src/store/useStore';
 
 export default function DishDetailPage({ params }) {
     const resolvedParams = React.use(params);
@@ -12,7 +13,16 @@ export default function DishDetailPage({ params }) {
     const [dish, setDish] = useState(null);
     const [relatedDishes, setRelatedDishes] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isFavorite, setIsFavorite] = useState(false);
+    const toggleFavorite = useStore((state) => state.toggleFavorite);
+    const toggleCart = useStore((state) => state.toggleCart);
+    const cart = useStore((state) => state.cart);
+    const favorites = useStore((state) => state.favorites);
+    const [toast, setToast] = useState({ visible: false, message: '' });
+
+    const showToast = (message, ms = 1800) => {
+        setToast({ visible: true, message });
+        setTimeout(() => setToast({ visible: false, message: '' }), ms);
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -88,17 +98,22 @@ export default function DishDetailPage({ params }) {
                                     {dish.price.toLocaleString()} <span className="text-lg sm:text-xl text-gray-500 font-medium">CFA</span>
                                 </div>
                                 <div className="flex gap-3 w-full sm:w-auto">
+                                    {(() => {
+                                        const inCart = cart.some((item) => item.id === dish._id);
+                                        return (
+                                            <button
+                                                onClick={() => { toggleCart({ id: dish._id, name: dish.name, price: dish.price, imageUrl: dish.photoUrl }); showToast(inCart ? `${dish.name} removed from cart` : `${dish.name} added to cart`); }}
+                                                className={`flex-1 sm:flex-none px-6 py-3.5 rounded-xl font-bold shadow-lg transition flex items-center justify-center gap-2 active:scale-95 ${inCart ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                                            >
+                                                <ShoppingCart size={18} /> {inCart ? 'Remove from Cart' : 'Add to Cart'}
+                                            </button>
+                                        );
+                                    })()}
                                     <button 
-                                        onClick={() => console.log("Added")}
-                                        className="flex-1 sm:flex-none bg-gray-900 text-white px-6 py-3.5 rounded-xl font-bold shadow-lg hover:bg-gray-800 transition flex items-center justify-center gap-2 active:scale-95"
+                                        onClick={() => { const isFav = favorites.includes(dish._id); toggleFavorite(dish._id); showToast(isFav ? `${dish.name} removed from favorites` : `${dish.name} added to favorites`); }}
+                                        className={`p-3.5 rounded-xl border-2 transition active:scale-95 ${favorites.includes(dish._id) ? 'border-red-500 text-red-500 bg-red-50' : 'border-gray-200 text-gray-400 hover:border-gray-300'}`}
                                     >
-                                        <ShoppingCart size={18} /> Add to Cart
-                                    </button>
-                                    <button 
-                                        onClick={() => setIsFavorite(!isFavorite)}
-                                        className={`p-3.5 rounded-xl border-2 transition active:scale-95 ${isFavorite ? 'border-red-500 text-red-500 bg-red-50' : 'border-gray-200 text-gray-400 hover:border-gray-300'}`}
-                                    >
-                                        <Heart size={20} fill={isFavorite ? "currentColor" : "none"} />
+                                        <Heart size={20} fill={favorites.includes(dish._id) ? "currentColor" : "none"} />
                                     </button>
                                 </div>
                             </div>
@@ -255,6 +270,13 @@ export default function DishDetailPage({ params }) {
                 )}
 
             </div>
+            {toast.visible && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+                    <div className="bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg pointer-events-auto max-w-xs text-center">
+                        {toast.message}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

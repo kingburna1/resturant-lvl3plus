@@ -4,9 +4,9 @@ const OrderSchema = new mongoose.Schema({
   orderNumber: { type: String, required: true, unique: true },
   tableNumber: { type: Number, required: true },
   customer: {
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
-    phone: { type: String, required: true },
+    firstName: { type: String },
+    lastName: { type: String },
+    phone: { type: String },
     email: String
   },
   items: [{
