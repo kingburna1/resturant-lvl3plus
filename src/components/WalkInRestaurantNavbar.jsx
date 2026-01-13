@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { Menu, Search, ShoppingCart, Home, Utensils, Zap, ChevronDown, X, Globe } from 'lucide-react';
+import { Menu, Search, ShoppingCart, Home, Utensils, Zap, ChevronDown, X, Globe, Heart } from 'lucide-react';
+import useStore from "../store/useStore";
 
 // --- Configuration Data (UPDATED) ---
 const CATEGORIES = [
@@ -17,13 +18,12 @@ const LANGUAGES = [
     { code: 'fr', label: 'French', flag: '🇫🇷' },
 ];
 
-const currentCartCount = 3; // Mock cart state
 const currentTable = '5'; // Mock table indicator
 
 // --- Sub-Components & Logic ---
 
 // 1. Mobile Drawer Component (Updated Categories)
-const MobileDrawer = ({ isOpen, toggleOpen, categories, currentLanguage, setLanguage }) => {
+const MobileDrawer = ({ isOpen, toggleOpen, categories, currentLanguage, setLanguage, }) => {
   const drawerVariants = {
     hidden: { x: "100%" },
     visible: { x: 0, transition: { type: "spring", stiffness: 100, damping: 15 } },
@@ -143,6 +143,9 @@ const NavLink = ({ href, children }) => (
 
 
 const WalkInRestaurantNavbar = () => {
+  // Zustand store selectors
+  const cartCount = useStore((state) => state.cart.reduce((acc, item) => acc + item.quantity, 0));
+  const favoriteCount = useStore((state) => state.favorites.length);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 //   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].name); // Mock active category
   // New State for Language
@@ -225,11 +228,26 @@ const WalkInRestaurantNavbar = () => {
           {/* RIGHT SIDE: CTA, Cart, Language (Dropdown Implemented) */}
           <div className="flex items-center space-x-4 sm:space-x-6">
             
+
+             <Link href="/favorite" className="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors">
+              <Heart size={24} />
+              {favoriteCount > 0 && (
+                <motion.span 
+                  className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full"
+                  animate={{ scale: [1, 1.2, 1] }} 
+                  transition={{ duration: 0.5, repeat: Infinity, delay: 5, repeatDelay: 10 }}
+                >
+                  {favoriteCount}
+                </motion.span>
+              )}
+            </Link>
             {/* Order Now CTA */}
             <motion.div 
   className="bg-indigo-600 text-white rounded-full transition-colors duration-200 hover:bg-indigo-700 font-bold"
   whileTap={{ scale: 0.95 }}
 >
+     
+
   <Link 
     href="/checkout" 
     // FIXED: Responsive Padding & Layout on the Link
@@ -255,13 +273,13 @@ const WalkInRestaurantNavbar = () => {
             {/* Cart Icon */}
             <Link href="/cart" className="relative p-2 text-gray-700 hover:text-indigo-600 transition-colors">
               <ShoppingCart size={24} />
-              {currentCartCount > 0 && (
+              {cartCount > 0 && (
                 <motion.span 
                   className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full"
                   animate={{ scale: [1, 1.2, 1] }} 
                   transition={{ duration: 0.5, repeat: Infinity, delay: 5, repeatDelay: 10 }}
                 >
-                  {currentCartCount}
+                  {cartCount}
                 </motion.span>
               )}
             </Link>
@@ -305,6 +323,8 @@ const WalkInRestaurantNavbar = () => {
         categories={CATEGORIES}
         currentLanguage={currentLanguage}
         setLanguage={setLanguage}
+        cartCount={cartCount}
+        favoriteCount={favoriteCount}
       />
     </>
   );

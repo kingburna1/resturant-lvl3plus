@@ -2,15 +2,30 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ShoppingCart, Heart, Star } from 'lucide-react'; // Added Star icon
+import { useState } from 'react';
+import { ShoppingCart, Heart, Star } from 'lucide-react'; 
 import Image from 'next/image';
+import useStore from "../store/useStore";
 
-/**
- * Dish Card Component - Optimized for Mobile Grid (2 columns)
- */
-const DishCard = ({ id, name, imageUrl, rating = 0, isFavorite = false }) => {
-  
-  const linkHref = `/dish/${id}`; 
+
+const DishCard = ({ id, name, imageUrl, rating = 0, price = 0 }) => {
+  const linkHref = `/dish/${id}`;
+  const [imageSrc, setImgSrc] = useState(imageUrl);
+  const isFavorite = useStore((state) => state.favorites.includes(id));
+  const toggleFavorite = useStore((state) => state.toggleFavorite);
+  const toggleCart = useStore((state) => state.toggleCart);
+  const isInCart = useStore((state) => state.cart.some((item) => item.id === id));
+
+  const handleFavoriteClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(id);
+  };
+
+  const handleCartClick = (e) => {
+    e.stopPropagation();
+    toggleCart({ id, name, price, imageUrl });
+  };
 
   return (
     <motion.div
@@ -22,27 +37,30 @@ const DishCard = ({ id, name, imageUrl, rating = 0, isFavorite = false }) => {
     >
       
       {/* 1. Image Area */}
-      <Link href={linkHref} className="relative block w-full aspect-square bg-gray-100">
-        <Image 
-          src={imageUrl} 
-          alt={name} 
-          width={300} 
-          height={300}
-          className="w-full h-full object-cover transition-transform duration-300 hover:scale-[1.03]"
-        />
+     <div className="relative"> 
+        
+        <Link href={linkHref} className="block w-full aspect-square bg-gray-100">
+          <Image 
+            src={imageUrl} 
+            alt={name} 
+            width={300} 
+            height={300}
+            onError={() => setImgSrc('/images/placeholder-food.png')}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+          />
+        </Link>
         
         {/* Favorite Button */}
         <button
           className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-white/80 backdrop-blur-sm 
-                     text-gray-400 hover:text-red-500 transition-colors z-10 shadow-sm"
-          onClick={(e) => {
-            e.preventDefault();
-            console.log(`Toggling favorite for ${id}`);
-          }}
+                     text-gray-400 hover:text-red-500 transition-colors z-20 shadow-sm"
+          onClick={handleFavoriteClick}
+          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
-          <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} className={isFavorite ? 'text-red-500' : 'text-gray-400'} />
+          <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} className={isFavorite ? 'text-red-500 ' : 'text-gray-400'} />
         </button>
-      </Link>
+
+      </div>
 
       {/* 2. Content */}
       <div className="p-2 sm:p-3 flex flex-col grow">
@@ -64,14 +82,11 @@ const DishCard = ({ id, name, imageUrl, rating = 0, isFavorite = false }) => {
             <span className="text-[10px] text-green-600 sm:text-xs">Available</span>
 
             <button
-                className="bg-indigo-600 text-white p-1.5 sm:p-2 rounded-full 
-                        hover:bg-indigo-700 transition shadow-sm"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    console.log(`Added ${id} to cart`);
-                }}
+              className={`${isInCart ? 'bg-indigo-300' : 'bg-indigo-600'} text-white p-1.5 sm:p-2 rounded-full 
+                  hover:bg-indigo-700 transition shadow-sm`}
+              onClick={handleCartClick}
             >
-                <ShoppingCart size={14} className="sm:w-4 sm:h-4" /> 
+              <ShoppingCart size={14} className="sm:w-4 sm:h-4" /> 
             </button>
         </div>
       </div>
